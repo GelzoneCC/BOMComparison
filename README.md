@@ -10,7 +10,7 @@ Compare 2 BOMs to find add, remove and change data.<br>
 7. anytree for storing level structure data
 ## UI
 <a href="https://doc.qt.io/qt-6/qt-intro.html"><img src="https://w7.pngwing.com/pngs/794/1022/png-transparent-qt-creator-qt-quick-the-qt-company-posted-write-text-trademark-rectangle-thumbnail.png" style="width:32px;height:32px"/></a><br>
-Use Qt designer and convert it .py. (PyQt5)
+Use Qt designer and convert it to .py. (PyQt5)
 ## EXE
 You can use auto-py-to-exe to make your program an exe file.
 ## Environment
