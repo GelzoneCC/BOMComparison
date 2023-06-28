@@ -249,7 +249,7 @@ class Ui_AgileRDMainWindow(object):
     def retranslateUi(self, AgileRDMainWindow):
         _translate = QtCore.QCoreApplication.translate
         AgileRDMainWindow.setWindowTitle(_translate("AgileRDMainWindow", "AgileCompareWithRD"))
-        self.toolVerLabel.setText(_translate("AgileRDMainWindow", "93_AgileCompareWithRD_V0.1.3"))
+        self.toolVerLabel.setText(_translate("AgileRDMainWindow", "Version of this tool"))
         self.rdBOMLabel.setText(_translate("AgileRDMainWindow", "RD BOM:"))
         self.agileBOMLabel.setText(_translate("AgileRDMainWindow", "Agile BOM:"))
         self.configLabel.setText(_translate("AgileRDMainWindow", "Config:"))
@@ -257,7 +257,7 @@ class Ui_AgileRDMainWindow(object):
         self.agileBrowseBtn.setText(_translate("AgileRDMainWindow", "Browse"))
         self.rdFileNameText.setPlaceholderText(_translate("AgileRDMainWindow", "rdBOM.xlsm"))
         self.agileFileNameText.setPlaceholderText(_translate("AgileRDMainWindow", "agileBOM.xls"))
-        self.configInputText.setPlaceholderText(_translate("AgileRDMainWindow", "e.g. (L5-New) 24x2.5\" chassis assy"))
+        self.configInputText.setPlaceholderText(_translate("AgileRDMainWindow", "some valid config"))
         self.progressBar.setFormat(_translate("AgileRDMainWindow", "%p%"))
         self.changeListBtn.setText(_translate("AgileRDMainWindow", "Change List"))
 import rsc_rc
