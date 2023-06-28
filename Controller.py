@@ -2,7 +2,7 @@
 """
 Created on Tue May 23 15:20:23 2023
 
-@author: EricCC_Huang
+@author: GelzoneCC
 """
 
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -13,7 +13,7 @@ from decimal import Decimal, ROUND_HALF_UP
 
 startTime = time.time()
 
-###----------Application UI initialization, flow control.----------### (2023/05/26 ~ Eric)
+###----------Application UI initialization, flow control.----------###
 class MainWindowController(QMainWindow, Ui_AgileRDMainWindow):
     def __init__(self):
         super().__init__()
@@ -42,7 +42,7 @@ class MainWindowController(QMainWindow, Ui_AgileRDMainWindow):
         self.changeListBtn.clicked.connect(self.changeList)
     
     def openRDBOM(self):
-        rdBOMName, fileType = QFileDialog.getOpenFileName(self, "Open RD BOM", "{}".format(os.path.expanduser('~/Documents'))) #Browse file window title: Open RD BOM. ./ means open at current position.
+        rdBOMName, fileType = QFileDialog.getOpenFileName(self, "Open RD BOM", "{}".format(os.path.expanduser('~/Documents'))) #Browse file window title: Open RD BOM.
         self.rdFileNameText.setPlainText(rdBOMName)
     
     def openAgileBOM(self):
@@ -58,7 +58,7 @@ class MainWindowController(QMainWindow, Ui_AgileRDMainWindow):
         #self.msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
         self.msg.exec()
     
-    #----------Generate change list.---------- (2023/05/29 ~ 05/31 Eric)
+    #----------Generate change list.----------
     def changeList(self):
         if self.rdFileNameText.toPlainText() == '' or self.agileFileNameText.toPlainText() == '' or self.configInputText.toPlainText() == '': #Check whether files are empty.
             self.msgBox('Warning!', 'Please upload files or input config.', 2) #Warning.
@@ -90,18 +90,18 @@ class MainWindowController(QMainWindow, Ui_AgileRDMainWindow):
             logList.append('Completed. Please refer to the following path for the agile update result.\n{}'.format(os.path.dirname(self.rdFileNameText.toPlainText()) + '/' + currTime + '_Agile update.xlsx'))
             logFile()
 
-###----------Move data process code here to connect UI flow control.----------### (2023/05/31 Eric)
+###----------Move data process code here to connect UI flow control.----------###
 import openpyxl, xlsxwriter, xlrd, os, pylightxl, copy
 import pandas as pd
 import numpy as np
 from anytree import Node, RenderTree, PreOrderIter
 
-#excelPath = os.path.join('C:/Users/EricCC_Huang/Python Workspace/A31AgileCompareSMBOM', '{}'.format(os.getlogin() + '' + time.strftime("%Y%m%d-%H%M%S")))
-###----------A31 agile BOM----------###(2023/03/07, 03/22 Eric)
+
+###----------agile BOM----------###
 def agileBOM(filePath):
     #Read agile system BOM as a dataframe.
     agileBOM_df = pd.read_excel(filePath, header = 0, index_col = None, engine = 'xlrd')
-    agileBOM_df.loc[agileBOM_df['Level'] == 0, 'BOM.Qty'] = 1 #Set BOM.Qty = 1 for all level 0 in agile BOM. (2023/05/29 Eric)
+    agileBOM_df.loc[agileBOM_df['Level'] == 0, 'BOM.Qty'] = 1 #Set BOM.Qty = 1 for all level 0 in agile BOM.
     agileBOM_df['BOM.Qty'].convert_dtypes()
     agileBOM_df['BOM.Qty'] = agileBOM_df['BOM.Qty'].astype('Int64') #Convert to pandas integer including NaN value.
     #Remove rows with blank based on Number.
@@ -112,15 +112,15 @@ def agileBOM(filePath):
     agileBOM_df['Level'] += 1
     agileBOM_df['Level'] = agileBOM_df['Level'].astype(int)
     #Remove rows with '864KE' in Number.
-    agileBOM_df.drop(agileBOM_df[agileBOM_df.Number == '864KE'].index, inplace = True)
+    agileBOM_df.drop(agileBOM_df[agileBOM_df.Number == 'xxxxx'].index, inplace = True)
     #Keep key column.
-    agileBOMKeyCol_df = agileBOM_df[['Level', 'Number', 'BOM.Qty', '*Description']] #Remove writer and add key column df. (2023/03/22 Eric)
-    agileBOMKeyCol_df['*Description'] = agileBOMKeyCol_df['*Description'].str.rstrip() #Remove blank at the end of the description. (2023/05/03 Eric)
+    agileBOMKeyCol_df = agileBOM_df[['Level', 'Number', 'BOM.Qty', '*Description']] #Remove writer and add key column df.
+    agileBOMKeyCol_df['*Description'] = agileBOMKeyCol_df['*Description'].str.rstrip() #Remove blank at the end of the description.
     agileBOMKeyCol_df = agileBOMKeyCol_df.reset_index(drop = True)
     
     return agileBOMKeyCol_df
 
-###----------RD SMBOM----------### (2023/03/07 ~ 03/23 Eric)
+###----------RD SMBOM----------###
 def rdSMBOM(filePath, config):
     #----------Use pylightxl to read RD SMBOM as a dataframe and keep key column.----------
     wb = pylightxl.readxl(fn = filePath, ws = 'BOM')
@@ -138,10 +138,10 @@ def rdSMBOM(filePath, config):
         data.append(rowData)
     rdSMBOM_df = pd.DataFrame(data[1:], columns = data[0])
     rdSMBOM_df['Unique Identifier'] = rdSMBOM_df['Unique Identifier'].str.rstrip()
-    rdSMBOM_df['DPN'].replace('', np.nan, inplace = True) #Convert empty string to NaN. (2023/04/13 Eric)
+    rdSMBOM_df['DPN'].replace('', np.nan, inplace = True) #Convert empty string to NaN.
     rdSMBOM_df['DPN'].replace(' ', np.nan, inplace = True) #most null value is a space in SMBOM...
     
-    #Find index of LVL == 0's row and the next index of LVL == 0's row to grab the data between them. (2023/05/29 Eric)
+    #Find index of LVL == 0's row and the next index of LVL == 0's row to grab the data between them.
     motherLevelIndex = rdSMBOM_df[(rdSMBOM_df['LVL'] == 0) & (rdSMBOM_df['Unique Identifier'] == config)].index[0]
     if rdSMBOM_df.loc[motherLevelIndex + 1:, 'LVL'].eq(0).any(): #Check if there's next LVL == 0's row.
         nextLevelIndex = rdSMBOM_df[rdSMBOM_df.index > motherLevelIndex]['LVL'].idxmin() #Get index of next LVL == 0's row.
@@ -151,12 +151,12 @@ def rdSMBOM(filePath, config):
     rowsBetween.dropna(subset = ['DPN'], inplace = True)
     #Keep key column.
     rdSMBOMKeyCol_df = rowsBetween[['LVL', 'DPN', 'QPA', 'Agile Description']]
-    rdSMBOMKeyCol_df['Agile Description'] = rdSMBOMKeyCol_df['Agile Description'].str.rstrip() #Remove blank at the end of the description. (2023/05/03 Eric)
+    rdSMBOMKeyCol_df['Agile Description'] = rdSMBOMKeyCol_df['Agile Description'].str.rstrip() #Remove blank at the end of the description.
     rdSMBOMKeyCol_df = rdSMBOMKeyCol_df.reset_index(drop = True)
     
     return rdSMBOMKeyCol_df
 
-###----------Get list of 'Unique Identifier' column when 'LVL' == 0.----------### (2023/03/24 Eric)
+###----------Get list of 'Unique Identifier' column when 'LVL' == 0.----------###
 def getFullConfig(filePath):
     # TODO May check all columns when LVL == 0
     #Read RD SMBOM.
@@ -180,7 +180,7 @@ def getFullConfig(filePath):
     
     return uidList
 
-###----------Create initial Excel file of change list with specific format.----------### (2023/03/23 ~ 03/28 Eric)
+###----------Create initial Excel file of change list with specific format.----------###
 def initChangeList():
     dateTime = 'Date & Time: '+ time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
     global outputPath
@@ -189,37 +189,11 @@ def initChangeList():
         os.mkdir(outputPath)
     global currTime
     currTime = time.strftime("%Y%m%d-%H%M%S")
-    #----------Set initial Excel file with specific format.---------- (2023/03/24 Eric)   
+    #----------Set initial Excel file with specific format.----------
     with pd.ExcelWriter(outputPath + '/' + currTime + '_Agile update.xlsx', engine = 'xlsxwriter', mode = 'w') as writer: 
-        data = {'Level0': [],
-                'Level1': [],
-                'Level 2': [],
-                'Level 3': [],
-                'Level 4': [],
-                'Level 5': [],
-                'Level 6': [],
-                'Level 7': [],
-                'Level 8': [],
-                'Qty': [], 
-                'Agile Description': [], 
-                'PPID Required': [], 
-                'Mfr. Name': [], 
-                'Mfr. Part Number': [], 
-                'Part Type': [], 
-                'Part Class': [], 
-                'Char. Count <=30': [], 
-                'BOM note': [], 
-                'Proj-Platform Affected': [], 
-                'Design Type': [],
-                'LOBs Affected': [], 
-                'Regions Affected': [], 
-                'Royalty Flag': [], 
-                'Lead Free': [], 
-                'ECCN Number': [],
-                'Supplier Access': [], 
-                '3D file name': [], 
-                'Regulatory Model Number': [], 
-                'Regulatory Type': []
+        data = {'''
+        some columns
+                '''
                 }
         initExcel_df = pd.DataFrame(data)
         initExcel_df.to_excel(writer, sheet_name = 'Sheet1', index = False)
@@ -228,100 +202,9 @@ def initChangeList():
         for idx, col in enumerate(initExcel_df.columns):
             colWidth = len(col)
             ws.set_column(idx, idx, colWidth)
-        cellFormat1 = wb.add_format({'bg_color': 'red', 
-                                     'font_color': 'white', 
-                                     'bold': True, 
-                                     'align': 'center', 
-                                     'valign': 'vcenter', 
-                                     'font_name': 'Arial', 
-                                     'font_size': 10,
-                                     'border': True,
-                                     'top': 1, 
-                                     'bottom': 1, 
-                                     'left': 1, 
-                                     'right': 1, 
-                                     })
-        ws.write('A1', 'Level0', cellFormat1)
-        ws.write('B1', 'Level1', cellFormat1)
-        cellFormat2 = wb.add_format({'bg_color': '#00b0f0', 
-                                     'font_color': 'white', 
-                                     'bold': True, 
-                                     'align': 'left', 
-                                     'valign': 'vcenter', 
-                                     'font_name': 'Arial', 
-                                     'font_size': 10, 
-                                     'border': True,
-                                     'top': 1, 
-                                     'bottom': 1, 
-                                     'left': 1, 
-                                     'right': 1, 
-                                     })
-        ws.write('C1', 'Level 2', cellFormat2)
-        ws.write('D1', 'Level 3', cellFormat2)
-        ws.write('E1', 'Level 4', cellFormat2)
-        ws.write('F1', 'Level 5', cellFormat2)
-        ws.write('G1', 'Level 6', cellFormat2)
-        ws.write('H1', 'Level 7', cellFormat2)
-        ws.write('I1', 'Level 8', cellFormat2)
-        cellFormat3 = wb.add_format({'bg_color': '#00b0f0', 
-                                     'font_color': 'white', 
-                                     'bold': True, 
-                                     'align': 'center', 
-                                     'valign': 'vcenter', 
-                                     'font_name': 'Arial', 
-                                     'font_size': 10, 
-                                     'border': True,
-                                     'top': 1, 
-                                     'bottom': 1, 
-                                     'left': 1, 
-                                     'right': 1, 
-                                     })
-        ws.write('J1', 'Qty', cellFormat3)
-        ws.write('K1', 'Agile Description', cellFormat3)
-        ws.write('L1', 'PPID Required', cellFormat3)
-        ws.write('M1', 'Mfr. Name', cellFormat3)
-        ws.write('N1', 'Mfr. Part Number', cellFormat3)
-        ws.write('O1', 'Part Type', cellFormat3)
-        ws.write('P1', 'Part Class', cellFormat3)
-        ws.write('Q1', 'Char. Count <=30', cellFormat3)
-        ws.write('R1', 'BOM note', cellFormat3)
-        ws.write('S1', 'Proj-Platform Affected', cellFormat3)
-        ws.write('T1', 'Design Type', cellFormat3)
-        ws.write('U1', 'LOBs Affected', cellFormat3)
-        ws.write('V1', 'Regions Affected', cellFormat3)
-        ws.write('W1', 'Royalty Flag', cellFormat3)
-        ws.write('X1', 'Lead Free', cellFormat3)
-        ws.write('Y1', 'ECCN Number', cellFormat3)
-        ws.write('Z1', 'Supplier Access', cellFormat3)
-        cellFormat4 = wb.add_format({'bg_color': 'black', 
-                                     'font_color': 'white', 
-                                     'bold': True, 
-                                     'align': 'center', 
-                                     'valign': 'vcenter', 
-                                     'font_name': 'Arial', 
-                                     'font_size': 10, 
-                                     'border': True,
-                                     'top': 1, 
-                                     'bottom': 1, 
-                                     'left': 1, 
-                                     'right': 1, 
-                                     })
-        ws.write('AA1', '3D file name', cellFormat4)
-        cellFormat5 = wb.add_format({'bg_color': '#00b0f0', 
-                                     'font_color': 'white', 
-                                     'bold': True, 
-                                     'align': 'center', 
-                                     'valign': 'bottom', 
-                                     'font_name': 'Arial', 
-                                     'font_size': 10, 
-                                     'border': True,
-                                     'top': 1, 
-                                     'bottom': 1, 
-                                     'left': 1, 
-                                     'right': 1, 
-                                     })
-        ws.write('AB1', 'Regulatory Model Number', cellFormat5)
-        ws.write('AC1', 'Regulatory Type', cellFormat5)
+        '''
+        cell format setting
+        '''
     
     global logList
     logList = []
@@ -337,15 +220,15 @@ def initChangeList():
     logList.append(initFileLog)
     window.progressBar.setValue(5)
     
-###----------Add comparison into change list Excel file.----------### (2023/03/25 ~ 04/14；05/02 ~ 05/10 Eric)
+###----------Add comparison into change list Excel file.----------###
 def toChangeList(agileBOM, rdBOM, config):
     #Remove rows that 'LVL' == 0 in RD SMBOM.
     rdBOM.drop(rdBOM[rdBOM.LVL == 0].index, inplace = True)
-    #Load agile update format as a dataframe. (2023/04/12 Eric)
+    #Load agile update format as a dataframe.
     agileUpdateFmt_df = pd.read_excel(outputPath + '/' +currTime + '_Agile update.xlsx', header = 0, index_col = None, engine = 'openpyxl')
     agileUpdateFmt_df = agileUpdateFmt_df.replace('', np.nan)
     
-    #----------Build agile BOM tree.---------- (2023/05/02 Eric)
+    #----------Build agile BOM tree.----------
     #Create the root node.
     agileRoot = Node(config, qty = '', desc = '')
     #Initialize stack with root node and level 0.
@@ -367,7 +250,7 @@ def toChangeList(agileBOM, rdBOM, config):
     for node in PreOrderIter(agileTreeCopy):
         node.level = node.depth
     
-    #----------Build RD SMBOM tree.---------- (2023/05/02 Eric)
+    #----------Build RD SMBOM tree.----------
     rdRoot = Node(config, qty = '', desc = '')
     rdStack = [(rdRoot, 0)]
     for idx, row in rdBOM.iterrows():
@@ -386,7 +269,7 @@ def toChangeList(agileBOM, rdBOM, config):
     logList.append(buildTreeLog)
     window.progressBar.setValue(25)
     
-    #----------Add node information into list and convert to dataframe.----------(2023/05/04 ~ 05/09 Eric)
+    #----------Add node information into list and convert to dataframe.----------
     agileTreeStruct = []
     agileLevel = []
     agilePN = []
@@ -425,7 +308,7 @@ def toChangeList(agileBOM, rdBOM, config):
     logList.append(treeToDFLog)
     window.progressBar.setValue(50)
     
-    #----------Merge the 2 dataframe to compare with each other and add it into agileUpdate_df.---------- (2023/04/11 ~ 04/17；05/05 ~  05/10 Eric)
+    #----------Merge the 2 dataframe to compare with each other and add it into agileUpdate_df.----------
     treeMerged_df = pd.merge(rdTree_df, agileTree_df, on = ['Tree Structure', 'Level', 'PN'], how = 'outer', suffixes = ('_new', '_old'), indicator = True)
     treeMerged_df['note'] = ''
     treeMerged_df.fillna('', inplace = True) #Convert NaN to empty string here so that it can use == to check the status.
@@ -569,13 +452,13 @@ def toChangeList(agileBOM, rdBOM, config):
     logList.append(mergeToCompareLog)
     window.progressBar.setValue(75)
     
-    #----------Append the data of agileUpdateFmt_df to initial Excel file.---------- (2023/04/13 ~ 05/10 Eric)
+    #----------Append the data of agileUpdateFmt_df to initial Excel file.----------
     with pd.ExcelWriter(outputPath + '/' + currTime + '_Agile update.xlsx', engine = 'openpyxl', mode = 'a', if_sheet_exists = 'overlay') as writer:
         agileUpdateFmt_df.to_excel(writer, sheet_name = 'Sheet1', header = False, index = False, startrow = 1, startcol = 0)
         wb = writer.book
         ws = writer.sheets['Sheet1']
         
-        #Set the global format first. (2023/04/13;05/08 Eric)
+        #Set the global format first.
         #Format of level 0 row.
         for cell in ws['2:2']:
             cell.font = openpyxl.styles.Font(name = 'Arial', color = 'ffffff', size = 10, bold = True)
@@ -594,7 +477,7 @@ def toChangeList(agileBOM, rdBOM, config):
                     cell.alignment = openpyxl.styles.Alignment(horizontal = 'left', vertical = 'center')
                 thin = openpyxl.styles.Side(border_style = 'thin')
                 cell.border = openpyxl.styles.Border(left = thin, right = thin, top = thin, bottom = thin)
-        #Set the format of status. (2023/04/13 ~ 05/29 Eric)
+        #Set the format of status.
         for row in range(3, ws.max_row + 1):
             startCol = None
             rowContainsAdd = False
@@ -665,8 +548,8 @@ def toChangeList(agileBOM, rdBOM, config):
     window.progressBar.setValue(100)
 
 global backupPath
-backupPath = os.path.join(r"\\tpesrvfs01\Common_Pool\HASD\HASD\HASD_FunctionTeam\ME\BackupData", '{}'.format(os.getlogin() + ' ' + time.strftime("%Y%m%d-%H%M%S")))
-#----------Log file.---------- (2023/05/31 ~ 06/01 Eric)
+backupPath = os.path.join(r"Path", '{}'.format(os.getlogin() + ' ' + time.strftime("%Y%m%d-%H%M%S")))
+#----------Log file.----------
 def logFile():
     if os.path.exists(backupPath) == False:
         os.mkdir(backupPath)
